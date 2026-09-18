@@ -57,6 +57,7 @@ public class Main {
 				break;
 			case 4:
 				System.out.println("(pendiente) Administracion del curso");
+				inscripcionManual();
 				break;
 			case 5:
 				System.out.println("(pendiente) Generar reportes");
@@ -73,6 +74,103 @@ public class Main {
 	}
 
 
+	private static void inscripcionManual() {
+		if(!verificarArchivosCargados()) {
+			return;
+		}
+		
+		System.out.println("Como desea inscribir a la persona?");
+		System.out.println("1) Por nombre completo");
+		System.out.println("2) Por RUT");
+		int opcion = leerOpcionMenu(1,2);
+		
+		if(opcion == 1) {
+			inscribirPorNombre();
+		}else {
+			inscribirPorRut();
+		}
+	}
+
+
+	private static void inscribirPorNombre() {
+		System.out.println("Ingrese nombre: ");
+		String nombre = teclado.nextLine().trim();
+		System.out.println("Ingrese apellido: ");
+		String apellido = teclado.nextLine().trim();
+		
+		if(nombre.isEmpty() || apellido.isEmpty()) {
+			System.out.println("El nombre y el apellido no pueden estar vacios");
+			return;
+		}
+		
+		totalIntentosIngresos++;
+		int idxAlumno = buscarAlumnoPorNombre(nombre, apellido);
+		
+		if(idxAlumno == -1) {
+			agregarRechazado(nombre, apellido, "", false);
+			System.out.println(nombre + " " + apellido + " ya es miembro del grupo.");
+			return;
+		}
+		String rut = rutAlumno[idxAlumno];
+		if(buscarMiembroPorRut(rut) != -1) {
+			System.out.println(nombre + " " + apellido + " ya es el miembro del grupo.");
+			return;
+			
+		}
+		if(cantMiembros >= MAX) {
+			System.out.println("No hay espacio disponible para mas miembros en el grupo.");
+			return;
+		}
+		agregarMiembro(nombreAlumno[idxAlumno], apellidoAlumno[idxAlumno], rut, paraleloAlumno[idxAlumno], true);
+		System.out.println(nombre + " " + apellido + " fue inscrito correctamente en el grupo (" + paraleloAlumno[idxAlumno] + ").");
+		
+	}
+
+	private static void inscribirPorRut() {
+		System.out.println("Ingrese RUT: ");
+		String rut = teclado.nextLine().trim();
+		
+		if(!validarRutNoVacio(rut)) {
+			System.out.println("El RUT no puede estar vacio.");
+			return;
+		}
+		totalIntentosIngresos++;
+		int idxAlumno = buscarAlumnoPorRut(rut);
+		
+		if(idxAlumno == -1) {
+			agregarRechazado("","", rut, true);
+			System.out.println("El RUT " + rut + " no pertenece a ningun paralelo del curso.");
+			System.out.println("No tenemos su nombre, por lo que se registrara solo el RUT en los rechazados.");
+			return;
+		}
+		if(buscarMiembroPorRut(rut) != -1) {
+			System.out.println("Esa persona ya es miembro del grupo.");
+			return;
+		}
+		if(cantMiembros >= MAX) {
+			System.out.println("No hay espacio disponible para mas miembros en el grupo.");
+			return;
+		}
+		agregarMiembro(nombreAlumno[idxAlumno], apellidoAlumno[idxAlumno], rut, paraleloAlumno[idxAlumno], true);
+		System.out.println(nombreAlumno[idxAlumno] + " " + apellidoAlumno[idxAlumno] + " fue inscrito correstamente en el grupo (" + paraleloAlumno[idxAlumno] + ").");
+		
+	}
+
+	private static boolean validarRutNoVacio(String rut) {
+		return rut != null && !rut.trim().isEmpty();
+	}
+
+	
+	private static int buscarAlumnoPorRut(String rut) {
+		for(int i = 0; i < cantAlumnos; i++) {
+			if(rutAlumno[i].equalsIgnoreCase(rut)) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	
 	private static void procesarSolicitudes() {
 		if(!verificarArchivosCargados()) {
 			return;
@@ -208,8 +306,6 @@ public class Main {
 		}
 		return cont;
 	}
-
-
 
 	private static int cargarSolicitudes(String rutaArchivo) {
 		File archivo = new File(rutaArchivo);
