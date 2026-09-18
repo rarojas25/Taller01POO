@@ -18,7 +18,23 @@ public class Main {
 	static String[] apellidoSolicitud = new String[MAX];
 	static int cantSolicitudes = 0;
 	
+	static String[] nombreMiembro = new String[MAX];
+	static String[] apellidoMiembro = new String[MAX];
+	static String[] rutMiembro = new String[MAX];
+	static String[] paraleloMiembro = new String[MAX];
+	static int cantMiembros = 0;
+	
+	static String[] rechazadoNombre = new String[MAX];
+	static String[] rechazadoApellido = new String[MAX];
+	static String[] rechazadoRut = new String[MAX];
+	static boolean[] rechazadoSoloRut = new boolean[MAX];
+	static int cantRechazados = 0;
+	
 	static boolean archivosCargados = false;
+	
+	static int totalIntentosIngresos = 0;
+	
+	static int solicitudesDuplicadas = 0;
 	
 	static Scanner teclado = new Scanner(System.in);
 	
@@ -37,6 +53,7 @@ public class Main {
 				break;
 			case 3:
 				System.out.println("(pendiente) Incripcion manual");
+				procesarSolicitudes();
 				break;
 			case 4:
 				System.out.println("(pendiente) Administracion del curso");
@@ -56,11 +73,93 @@ public class Main {
 	}
 
 
+	private static void procesarSolicitudes() {
+		if(!verificarArchivosCargados()) {
+			return;
+		}
+		System.out.println("Procesando solicitudes...");
+		System.out.println();
+		
+		int admitidosNuevos = 0;
+		int rechazadosNuevos = 0;
+		
+		for(int i = 0; i < cantSolicitudes; i++) {
+			String nombre = nombreSolicitud[i];
+			String apellido = apellidoSolicitud[i];
+			totalIntentosIngresos++;
+			
+			int idxAlumno = buscarAlumnoPorNombre(nombre, apellido);
+			
+			if(idxAlumno == -1) {
+				agregarRechazado(nombre, apellido, "", false);
+				rechazadosNuevos++;
+				System.out.println("[RECHAZO]  " + nombre + " " + apellido + "-> no pertenece a ningun paralelo");
+				continue;
+			}
+			
+			String rut = rutAlumno[idxAlumno];
+			if(buscarMiembroPorRut(rut) != -1) {
+				solicitudesDuplicadas++;
+				System.out.println("[DUPLICADO]  " + nombre + " " + apellido + "-> ya esta admitido, se ignora.");
+				continue;
+			}
+			if(cantMiembros >= MAX) {
+				System.out.println("Aviso: no hay espacio disponible para mas miembros en el grupo ");
+				break;
+			}
+			agregarMiembro(nombreAlumno[idxAlumno], apellidoAlumno[idxAlumno], rut, paraleloAlumno[idxAlumno], false);
+			admitidosNuevos++;
+			System.out.println("[OK]   " + nombre + " " + apellido + " -> admitido en " + paraleloAlumno[idxAlumno]);
+		}
+		System.out.println();
+		System.out.println("Resumen: " + admitidosNuevos + " admitidos / " + rechazadosNuevos + " rechazados.");
+	}
+
+
+	private static void agregarRechazado(String nombre, String apellido, String rut, boolean soloRut) {
+		if(cantRechazados >= MAX) {
+			System.out.println("Aviso: no hay espacio disponible para registrar mas rechazados");
+			return;
+		}
+		rechazadoNombre[cantRechazados] = nombre;
+		rechazadoApellido[cantRechazados] = apellido;
+		rechazadoRut[cantRechazados] = rut;
+		rechazadoSoloRut[cantRechazados] = soloRut;
+		cantRechazados++;
+	}
+
+	private static void agregarMiembro(String nombre, String apellido, String rut, String paralelo, boolean manual) {
+		nombreMiembro[cantMiembros] = nombre;
+		apellidoMiembro[cantMiembros] = apellido;
+		rutMiembro[cantMiembros] = rut;
+		paraleloMiembro[cantMiembros] = paralelo;
+		cantMiembros++;
+	}
+
+
+	private static int buscarAlumnoPorNombre(String nombre, String apellido) {
+		for(int i = 0; i < cantAlumnos; i++) {
+			if(nombreAlumno[i].equalsIgnoreCase(nombre) && apellidoAlumno[i].equalsIgnoreCase(apellido)) {
+				return i;
+			}
+		}
+		return 1;
+	}
+
+	private static int buscarMiembroPorRut(String rut) {
+		for(int i = 0; i < cantMiembros; i++) {
+			if(rutMiembro[i].equalsIgnoreCase(rut)) {
+				return i;
+			}
+		}
+		return 1;
+	}
+
+
 	private static void cargarArchivos() {
 		cantAlumnos = cargarAlumnos("Alumnos.txt");
 		cantSolicitudes = cargarSolicitudes("Solicitudes.txt");
 		archivosCargados = true;
-		
 		System.out.println("- " + cantAlumnos + " alumnos en la lista.");
 		System.out.println("- " + cantSolicitudes + " solicitudes de ingreso.");
 			
@@ -82,25 +181,21 @@ public class Main {
 				if(linea.isEmpty()) {
 					continue;
 			}
-				
 			String[] partes = linea.split(";", -1);
 			if(partes.length != 4) {
 				System.out.println("Aviso: linea " + numLinea + " de " + rutaArchivo + " mal formada, se omite.");
 				continue;
 			}
-			
 			String paralelo = partes[3].trim().toUpperCase();
 			if(!validarParalelo(paralelo)) {
 				System.out.println("Aviso: linea " + numLinea + " tiene un paralelo invalido, se omite.");
 				continue;
 			}
-			
 			if(cont >= MAX) {
 				System.out.println("Aviso: se alcanzo la capacidad maxima de  " + MAX + " alumnos, se omite el resto.");
 				break;
-				
-			}
-			
+		
+			}		
 			nombreAlumno[cont] = partes[0].trim();
 			apellidoAlumno[cont] = partes[1].trim();
 			rutAlumno[cont] = partes[2].trim();
@@ -108,11 +203,9 @@ public class Main {
 			cont++;
 			
 			}
-		
 		}catch(IOException e) {
 			System.out.println("Error al leer " + rutaArchivo + ": " + e.getMessage());
 		}
-		
 		return cont;
 	}
 
@@ -126,7 +219,6 @@ public class Main {
 			System.out.println("Aviso: no se encontro el archivo " + rutaArchivo + ".");
 			return 0;
 		}
-			
 		try (Scanner lector = new Scanner(archivo)){
 			int numLinea = 0;
 			while(lector.hasNextLine()) {
@@ -135,18 +227,15 @@ public class Main {
 				if(linea.isEmpty()) {
 					continue;
 				}
-				
 				String[] partes = linea.split("-", 2);
 				if(partes.length != 2 || partes[0].trim().isEmpty() || partes[1].trim().isEmpty()) {
 					System.out.println("Aviso: linea " + numLinea + " de " + rutaArchivo + " mal formada, se omite");
 					continue;
 				}
-				
 				if(cont >= MAX) {
 					System.out.println("Aviso: se alcanzo la capacidad maxima de " + MAX + " solicitudes, se omite el resto.");
 					break;
 				}
-				
 				nombreSolicitud[cont] = partes[0].trim();
 				apellidoSolicitud[cont] = partes[1].trim();
 				cont++;
@@ -154,16 +243,24 @@ public class Main {
 		}catch(IOException e) {
 			System.out.println("Error al leer " + rutaArchivo + ": " + e.getMessage());
 		}
-		
 		return cont;
 		
 	}
 	
 	private static boolean validarParalelo(String paralelo) {
-		
 		return paralelo != null && (paralelo.equalsIgnoreCase("C1") || paralelo.equalsIgnoreCase("C2"));
 	}
-
+	
+	
+	private static boolean verificarArchivosCargados() {
+		if(!archivosCargados) {
+			System.out.println("Primero debe cargar los archivos (opcion 1).");
+			return false;
+		}
+		return true;
+	}
+	
+	
 	private static void mostrarMenuPrincipal() {
 		System.out.println();
 		System.out.println("===== Sistema de Control del Grupo POO =====");
