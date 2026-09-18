@@ -1,6 +1,8 @@
 package logica;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -45,19 +47,16 @@ public class Main {
 			opcion = leerOpcionMenu(1,7);
 			switch (opcion) {
 			case 1:
-				System.out.println("(pendiente) Cargar Archivos");
 				cargarArchivos();
 				break;
 			case 2:
-				System.out.println("(pendiente) Procesar solicitudes");
-				break;
-			case 3:
-				System.out.println("(pendiente) Incripcion manual");
 				procesarSolicitudes();
 				break;
-			case 4:
-				System.out.println("(pendiente) Administracion del curso");
+			case 3:
 				inscripcionManual();
+				break;
+			case 4:
+				administracionCurso();
 				break;
 			case 5:
 				System.out.println("(pendiente) Generar reportes");
@@ -74,6 +73,159 @@ public class Main {
 	}
 
 
+	private static void administracionCurso() {
+		if(!verificarArchivosCargados()) {
+			return;
+		}
+		int opcion;
+		do {
+			System.out.println();
+			System.out.println("--- Administacion del curso ---");
+			System.out.println("1) Cambiar paralelo de un alumno");
+			System.out.println("2) Eliminar alumno del curso");
+			System.out.println("3) Inscribir alumno nuevo");
+			System.out.println("4) Volver");
+			opcion = leerOpcionMenu(1,4);
+			
+			switch (opcion) {
+				case 1: 
+					cambiarParalelo();
+					break;
+				case 2:
+					eliminarAlumno();
+					break;
+				case 3:
+					inscribirAlumnoNuevo();
+					break;
+				case 4:
+					System.out.println("Volviendo al menu principal...");
+					break;
+				
+			}
+		}while (opcion != 4);
+	}
+
+
+	private static void cambiarParalelo() {
+		System.out.println("Ingresa RUT del alumno: ");
+		String rut = teclado.nextLine().trim();
+		
+		int idx = buscarAlumnoPorRut(rut);
+		if(idx == -1) {
+			System.out.println("No existe ningun alumno con ese RUT.");
+			return;
+		}
+		System.out.println("Alumno: " + nombreAlumno[idx] + " " + apellidoAlumno[idx] + 
+				" (actualmente en " + paraleloAlumno[idx] + ")");
+		System.out.println("Nuevo paralelo (C1/C2): ");
+		String nuevoParalelo = teclado.nextLine().trim().toUpperCase();
+	
+		if(!validarParalelo(nuevoParalelo)) {
+			System.out.println("Paralelo invalido, solo se acepta C1 o C2. No se realizaron cambios.");
+			return;
+		}
+		paraleloAlumno[idx] = nuevoParalelo;
+			
+		int idxMiembro = buscarMiembroPorRut(rut);
+		if(idxMiembro != -1) {
+			paraleloMiembro[idxMiembro] = nuevoParalelo;
+			
+			guardarAlumnosEnArchivo();
+			System.out.println("Paralelo actualizado! Cambios guardados en Alumnos.txt");
+		}
+	}
+
+	private static void eliminarAlumno() {
+		System.out.println("Ingrese  RUT del alumno a eliminar: ");
+		String rut = teclado.nextLine().trim();
+		
+		int idx = buscarAlumnoPorRut(rut);
+		if(idx == -1) {
+			System.out.println("No existe ningun alumno a ese RUT.");
+			return;
+		}
+		String nombreEliminado = nombreAlumno[idx];
+		String apellidoEliminado = apellidoAlumno[idx];
+		
+		for(int i = idx; i < cantMiembros - 1; i++) {
+			nombreMiembro[i] = nombreMiembro[i + 1];
+			apellidoMiembro[i] = apellidoMiembro[i + 1];
+			paraleloMiembro[i] = paraleloMiembro[i + 1];
+		}
+		cantAlumnos--;
+		
+		int idxMiembro = buscarMiembroPorRut(rut);
+		if(idxMiembro != -1) {
+			for(int i = idxMiembro; i < cantMiembros - 1; i++) {
+				nombreMiembro[i] = nombreMiembro[i + 1];
+				apellidoMiembro[i] = apellidoMiembro[i + 1];
+				rutMiembro[i] = rutMiembro[i + 1];
+				paraleloMiembro[i] = paraleloMiembro[i + 1];
+			}
+			cantMiembros--;
+		}
+		guardarAlumnosEnArchivo();
+		System.out.println(nombreEliminado + " " + apellidoEliminado + " fue eliminado del curso y del grupo (si correspondia).");
+	}
+
+	private static void inscribirAlumnoNuevo() {
+		if(cantAlumnos >= MAX) {
+			System.out.println("No hay espacio disponible para inscribir mas alumnos");
+			return;
+		}
+		System.out.println("Nombre: ");
+		String nombre = teclado.nextLine().trim();
+		System.out.println("Apellido: ");
+		String apellido = teclado.nextLine().trim();
+		System.out.println("RUT: ");
+		String rut = teclado.nextLine().trim();
+		System.out.println("Paralelo (C1/C2): ");
+		String paralelo = teclado.nextLine().trim().toUpperCase();
+		
+		if(nombre.isEmpty() || apellido.isEmpty()) {
+			System.out.println("El nombre y el apellido no pueden estar vacios.");
+			return;
+		}
+		if(!validarRutNoVacio(rut)) {
+			System.out.println("El RUT no puede estar vacio.");
+			return;
+		}
+		if(!validarParalelo(paralelo)) {
+			System.out.println("Paralelo invalido, solo se acepta C1 o C2");
+			return;
+		}
+		if(buscarAlumnoPorRut(rut) != -1) {
+			System.out.println("Ya existe un alumno inscrito con ese RUT.");
+			return;
+		}
+		nombreAlumno[cantAlumnos] = nombre;
+		apellidoAlumno[cantAlumnos] = apellido;
+		rutAlumno[cantAlumnos] = rut;
+		paraleloAlumno[cantAlumnos] = paralelo;
+		cantAlumnos++;
+		
+		guardarAlumnosEnArchivo();
+		System.out.println(nombre + " " + apellido + " fue inscrito wn la lista del curso (paralelo " + paralelo + ").");
+		System.out.println("Recuerda que aun debe procesarse su ingreso al grupo (opcion 2 o 3).");
+		
+	}
+	
+	
+
+
+	private static void guardarAlumnosEnArchivo() {
+		try (BufferedWriter escritor = new BufferedWriter(new FileWriter("Alumnos.txt"))){
+			for(int i = 0; i < cantAlumnos; i++) {
+				escritor.write(nombreAlumno[i] + ";" + apellidoAlumno[i] + ";" + rutAlumno[i] + ";" + paraleloAlumno[i]);
+				escritor.newLine();
+			}
+			
+		}catch(IOException e) {
+			System.out.println("Error al guardar Alumnos.txt: " + e.getMessage());
+		}
+	}
+
+	
 	private static void inscripcionManual() {
 		if(!verificarArchivosCargados()) {
 			return;
