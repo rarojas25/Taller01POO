@@ -59,7 +59,8 @@ public class Main {
 				administracionCurso();
 				break;
 			case 5:
-				System.out.println("(pendiente) Generar reportes");
+				generarReportes();
+				break;
 			case 6:
 				System.out.println("(pendiente) Analisis estadistico");
 				break;
@@ -72,7 +73,95 @@ public class Main {
 		teclado.close();
 	}
 
+	private static void generarReportes() {
+		if(!verificarArchivosCargados()) {
+			return;
+		}
+		int opcion;
+		do {
+			System.out.println();
+			System.out.println("---Generar Reportes---");
+			System.out.println("1) Reporte paralelo C1");
+			System.out.println("2) Reporte paralelo C2");
+			System.out.println("3) Reporte de rechazados");
+			System.out.println("4) Volver");
+			opcion = leerOpcionMenu(1,4);
+			
+			switch(opcion) {
+				case 1:
+					generarReporteParalelo("C1");
+					break;
+				case 2:
+					generarReporteParalelo("C2");
+					break;
+				case 3:
+					generarReporteRechazados();
+					break;
+				case 4:
+					System.out.println("Volviendo al menu principal...");
+					break;
+			}
+		}while(opcion!=4);
+	}
 
+	private static void generarReporteParalelo(String paralelo) {
+		File carpeta = new File("Reportes");
+		if(!carpeta.exists()) {
+			carpeta.mkdir();
+		}
+		String prefijo = "Reporte" + paralelo;
+		int version = obtenerSiguienteVersion(prefijo);
+		String rutaArchivo = "Rportes/" + prefijo + "-V" + version + ".txt";
+		
+		try(BufferedWriter escritor = new BufferedWriter(new FileWriter(rutaArchivo))){
+			escritor.write("=== Miembros del grupo - Paralelo " + paralelo + " ===") ;
+			escritor.newLine();
+			for(int i = 0; i < cantMiembros; i++) {
+				if(paraleloMiembro[i].equals(paralelo)) {
+					escritor.write(nombreMiembro[i] + " " + apellidoMiembro[i] + " - " + rutMiembro[i]);
+					escritor.newLine();
+				}
+			}
+			System.out.println("Reporte generado: " + rutaArchivo);
+		}catch(IOException e) {
+			System.out.println("Error al generar el reporte: " + e.getMessage());
+		}
+	}
+	private static void generarReporteRechazados() {
+		File carpeta = new File("Reportes");
+		if(!carpeta.exists()) {
+			carpeta.mkdir();
+		}
+		int version = obtenerSiguienteVersion("Rechazados");
+		String rutaArchivo = "Reportes/Rechazados-V" + version + ".txt";
+		
+		try(BufferedWriter escritor = new BufferedWriter(new FileWriter(rutaArchivo))){
+			escritor.write("=== Solicitudes rechazadas ===");
+			escritor.newLine();
+			for(int i = 0; i < cantRechazados; i++) {
+				if(rechazadoSoloRut[i]) {
+					escritor.write("Sin nombre resgistrado, RUT: " + rechazadoRut[i]);
+				}else{
+					escritor.write(rechazadoNombre[i] + " " + rechazadoApellido[i] + " - No pertenece a ningun paralelo del curso");
+				}
+				escritor.newLine();
+			}
+			System.out.println("Reporte generado: " + rutaArchivo);
+		}catch(IOException e) {
+			System.out.println("Error al general el reporte: " + e.getMessage());
+		}
+	}
+	
+	private static int obtenerSiguienteVersion(String prefijo) {
+		int version = 1;
+		File archivo = new File("Reportes/" + prefijo + "-V" + version + ".txt");
+		while(archivo.exists()){
+			version++;
+			archivo = new File("Reportes/" + prefijo + "-V" + version + ".txt");
+		}
+		return version;
+	}
+	
 	private static void administracionCurso() {
 		if(!verificarArchivosCargados()) {
 			return;
@@ -322,7 +411,6 @@ public class Main {
 		return -1;
 	}
 
-	
 	private static void procesarSolicitudes() {
 		if(!verificarArchivosCargados()) {
 			return;
@@ -365,7 +453,6 @@ public class Main {
 		System.out.println("Resumen: " + admitidosNuevos + " admitidos / " + rechazadosNuevos + " rechazados.");
 	}
 
-
 	private static void agregarRechazado(String nombre, String apellido, String rut, boolean soloRut) {
 		if(cantRechazados >= MAX) {
 			System.out.println("Aviso: no hay espacio disponible para registrar mas rechazados");
@@ -386,7 +473,6 @@ public class Main {
 		cantMiembros++;
 	}
 
-
 	private static int buscarAlumnoPorNombre(String nombre, String apellido) {
 		for(int i = 0; i < cantAlumnos; i++) {
 			if(nombreAlumno[i].equalsIgnoreCase(nombre) && apellidoAlumno[i].equalsIgnoreCase(apellido)) {
@@ -404,7 +490,6 @@ public class Main {
 		}
 		return 1;
 	}
-
 
 	private static void cargarArchivos() {
 		cantAlumnos = cargarAlumnos("Alumnos.txt");
@@ -499,7 +584,6 @@ public class Main {
 		return paralelo != null && (paralelo.equalsIgnoreCase("C1") || paralelo.equalsIgnoreCase("C2"));
 	}
 	
-	
 	private static boolean verificarArchivosCargados() {
 		if(!archivosCargados) {
 			System.out.println("Primero debe cargar los archivos (opcion 1).");
@@ -507,7 +591,6 @@ public class Main {
 		}
 		return true;
 	}
-	
 	
 	private static void mostrarMenuPrincipal() {
 		System.out.println();
