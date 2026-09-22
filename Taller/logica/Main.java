@@ -1,3 +1,8 @@
+//Integrante: Rocio Azucena Rojas Robledo - 21694049-0 - ICCI - rarojas25
+//https://github.com/rarojas25/Taller01POO
+
+
+
 package logica;
 
 import java.io.BufferedWriter;
@@ -24,6 +29,7 @@ public class Main {
 	static String[] apellidoMiembro = new String[MAX];
 	static String[] rutMiembro = new String[MAX];
 	static String[] paraleloMiembro = new String[MAX];
+	static boolean[] miembroInscritoManualmente = new boolean[MAX];
 	static int cantMiembros = 0;
 	
 	static String[] rechazadoNombre = new String[MAX];
@@ -62,7 +68,7 @@ public class Main {
 				generarReportes();
 				break;
 			case 6:
-				System.out.println("(pendiente) Analisis estadistico");
+				analisisEstadistico();
 				break;
 			case 7:
 				System.out.println("Saliendo del programa. Hasta luego!");
@@ -71,6 +77,72 @@ public class Main {
 		}while(opcion != 7);
 		
 		teclado.close();
+	}
+
+	private static void analisisEstadistico() {
+		if(!verificarArchivosCargados()) {
+			return;
+		}
+		System.out.println();
+		System.out.println("--- Analisis estadisticos ---");
+		System.out.println("Total de intentos de ingreso: " + totalIntentosIngresos);
+		
+		if(totalIntentosIngresos == 0) {
+			System.out.println("Aun no se han procesado ni registrado intentos de ingreso.");
+		}else {
+			double porcentajeRechazo = (cantRechazados * 100.0) / totalIntentosIngresos;
+			double tasaAdmision = (cantMiembros * 100.0) / totalIntentosIngresos;
+			System.out.printf("Rechazados: %d (%.1f%%)%n", cantRechazados, porcentajeRechazo);
+			System.out.printf("Tasa de admision: %.1f%%%n", tasaAdmision);
+		}
+		int totalC1 = 0;
+		int totalC2 = 0;
+		for(int i = 0; i < cantAlumnos; i++) {
+			if(paraleloAlumno[i].equals("C1")) {
+				totalC1++;
+			}else if(paraleloAlumno[i].equals("C2")) {
+				totalC2++;
+			}
+		}
+		System.out.println("Alumnos por paralelo -> C1: " + totalC1 + " | C2: " + totalC2);
+		if(cantAlumnos > 0) {
+			System.out.println("Paralelo con las alumnos: " + (totalC1 >= totalC2 ? "C1" : "C2"));
+		}
+		
+		int rechazadosSoloRutCont = 0;
+		for(int i = 0; i < cantRechazados; i++) {
+			if(rechazadoSoloRut[i]) {
+				rechazadosSoloRutCont++;
+				
+			}
+		}
+		System.out.println("Rechazados registrados solo con RUT: " + rechazadosSoloRutCont);
+		int inscritosManual = 0;
+		for(int i = 0; i < cantMiembros; i++) {
+			if(miembroInscritoManualmente[i]) {
+				inscritosManual++;
+			}
+		}
+		System.out.println("Inscritos manuales: " + inscritosManual + " | Por Archivo: " + (cantMiembros - inscritosManual));
+		System.out.println("Solicirudes duplicadas detectadas: " + solicitudesDuplicadas);
+		
+		if(cantAlumnos > 0) {
+			String apellidoMasRepetido = apellidoAlumno[0];
+			int maxRepeticiones = 0;
+			for(int i = 0; i < cantAlumnos; i++) {
+				int repeticiones = 0;
+				for(int j = 0; j < cantAlumnos; j++) {
+					if(apellidoAlumno[j].equalsIgnoreCase(apellidoAlumno[i])) {
+						repeticiones++;
+					}
+				}
+				if(repeticiones > maxRepeticiones) {
+					maxRepeticiones = repeticiones;
+					apellidoMasRepetido = apellidoAlumno[i];
+				}
+			}
+			System.out.println("Apellido mas repetido en la lista: " +  apellidoMasRepetido + " (" + maxRepeticiones + " vez/veces)");
+		}
 	}
 
 	private static void generarReportes() {
@@ -111,7 +183,7 @@ public class Main {
 		}
 		String prefijo = "Reporte" + paralelo;
 		int version = obtenerSiguienteVersion(prefijo);
-		String rutaArchivo = "Rportes/" + prefijo + "-V" + version + ".txt";
+		String rutaArchivo = "Reportes/" + prefijo + "-V" + version + ".txt";
 		
 		try(BufferedWriter escritor = new BufferedWriter(new FileWriter(rutaArchivo))){
 			escritor.write("=== Miembros del grupo - Paralelo " + paralelo + " ===") ;
@@ -196,7 +268,7 @@ public class Main {
 
 
 	private static void cambiarParalelo() {
-		System.out.println("Ingresa RUT del alumno: ");
+		System.out.print("Ingresa RUT del alumno: ");
 		String rut = teclado.nextLine().trim();
 		
 		int idx = buscarAlumnoPorRut(rut);
@@ -206,7 +278,7 @@ public class Main {
 		}
 		System.out.println("Alumno: " + nombreAlumno[idx] + " " + apellidoAlumno[idx] + 
 				" (actualmente en " + paraleloAlumno[idx] + ")");
-		System.out.println("Nuevo paralelo (C1/C2): ");
+		System.out.print("Nuevo paralelo (C1/C2): ");
 		String nuevoParalelo = teclado.nextLine().trim().toUpperCase();
 	
 		if(!validarParalelo(nuevoParalelo)) {
@@ -225,7 +297,7 @@ public class Main {
 	}
 
 	private static void eliminarAlumno() {
-		System.out.println("Ingrese  RUT del alumno a eliminar: ");
+		System.out.print("Ingrese  RUT del alumno a eliminar: ");
 		String rut = teclado.nextLine().trim();
 		
 		int idx = buscarAlumnoPorRut(rut);
@@ -236,10 +308,10 @@ public class Main {
 		String nombreEliminado = nombreAlumno[idx];
 		String apellidoEliminado = apellidoAlumno[idx];
 		
-		for(int i = idx; i < cantMiembros - 1; i++) {
-			nombreMiembro[i] = nombreMiembro[i + 1];
-			apellidoMiembro[i] = apellidoMiembro[i + 1];
-			paraleloMiembro[i] = paraleloMiembro[i + 1];
+		for(int i = idx; i < cantAlumnos - 1; i++) {
+			nombreAlumno[i] = nombreAlumno[i + 1];
+			apellidoAlumno[i] = apellidoAlumno[i + 1];
+			paraleloAlumno[i] = paraleloAlumno[i + 1];
 		}
 		cantAlumnos--;
 		
@@ -250,6 +322,7 @@ public class Main {
 				apellidoMiembro[i] = apellidoMiembro[i + 1];
 				rutMiembro[i] = rutMiembro[i + 1];
 				paraleloMiembro[i] = paraleloMiembro[i + 1];
+				miembroInscritoManualmente[i] = miembroInscritoManualmente[i + 1];
 			}
 			cantMiembros--;
 		}
@@ -262,13 +335,13 @@ public class Main {
 			System.out.println("No hay espacio disponible para inscribir mas alumnos");
 			return;
 		}
-		System.out.println("Nombre: ");
+		System.out.print("Nombre: ");
 		String nombre = teclado.nextLine().trim();
-		System.out.println("Apellido: ");
+		System.out.print("Apellido: ");
 		String apellido = teclado.nextLine().trim();
-		System.out.println("RUT: ");
+		System.out.print("RUT: ");
 		String rut = teclado.nextLine().trim();
-		System.out.println("Paralelo (C1/C2): ");
+		System.out.print("Paralelo (C1/C2): ");
 		String paralelo = teclado.nextLine().trim().toUpperCase();
 		
 		if(nombre.isEmpty() || apellido.isEmpty()) {
@@ -298,9 +371,6 @@ public class Main {
 		System.out.println("Recuerda que aun debe procesarse su ingreso al grupo (opcion 2 o 3).");
 		
 	}
-	
-	
-
 
 	private static void guardarAlumnosEnArchivo() {
 		try (BufferedWriter escritor = new BufferedWriter(new FileWriter("Alumnos.txt"))){
@@ -313,7 +383,6 @@ public class Main {
 			System.out.println("Error al guardar Alumnos.txt: " + e.getMessage());
 		}
 	}
-
 	
 	private static void inscripcionManual() {
 		if(!verificarArchivosCargados()) {
@@ -332,11 +401,10 @@ public class Main {
 		}
 	}
 
-
 	private static void inscribirPorNombre() {
-		System.out.println("Ingrese nombre: ");
+		System.out.print("Ingrese nombre: ");
 		String nombre = teclado.nextLine().trim();
-		System.out.println("Ingrese apellido: ");
+		System.out.print("Ingrese apellido: ");
 		String apellido = teclado.nextLine().trim();
 		
 		if(nombre.isEmpty() || apellido.isEmpty()) {
@@ -368,7 +436,7 @@ public class Main {
 	}
 
 	private static void inscribirPorRut() {
-		System.out.println("Ingrese RUT: ");
+		System.out.print("Ingrese RUT: ");
 		String rut = teclado.nextLine().trim();
 		
 		if(!validarRutNoVacio(rut)) {
@@ -470,6 +538,7 @@ public class Main {
 		apellidoMiembro[cantMiembros] = apellido;
 		rutMiembro[cantMiembros] = rut;
 		paraleloMiembro[cantMiembros] = paralelo;
+		miembroInscritoManualmente[cantMiembros] = manual;
 		cantMiembros++;
 	}
 
@@ -479,7 +548,7 @@ public class Main {
 				return i;
 			}
 		}
-		return 1;
+		return -1;
 	}
 
 	private static int buscarMiembroPorRut(String rut) {
@@ -488,7 +557,7 @@ public class Main {
 				return i;
 			}
 		}
-		return 1;
+		return -1;
 	}
 
 	private static void cargarArchivos() {
@@ -606,7 +675,7 @@ public class Main {
 	
 	private static int leerOpcionMenu(int min, int max) {
 		while(true) {
-			System.out.println("Ingrese opcion: ");
+			System.out.print("Ingrese opcion: ");
 			String entrada = teclado.nextLine().trim();
 			try {
 				int opcion = Integer.parseInt(entrada);
