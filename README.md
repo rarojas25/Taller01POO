@@ -4,7 +4,7 @@ Sistema desarrollado en Java mediante programación estructurada y vectores est�
 
 ## 📋 Información de los Integrantes
 * **Nombre:** Rocio Rojas R
-* **Carrera:**ICCI
+* **Carrera:** ICCI
 
 ---
 
