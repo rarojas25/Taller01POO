@@ -23,4 +23,4 @@ El programa opera a través de un menú interactivo por consola con las siguient
 
 1. **Clonar el repositorio:**
    ```bash
-   git clone rarojas25/https://github.com/rarojas25/Taller01POO
+   git clone https://github.com/rarojas25/Taller01POO -  rarojas25
