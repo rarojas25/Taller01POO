@@ -23,5 +23,4 @@ El programa opera a través de un menú interactivo por consola con las siguient
 
 1. **Clonar el repositorio:**
    ```bash
-   git clone [https://github.com/](https://github.com/)[Tu-Usuario-GitHub]/[Nombre-Repositorio].git
-   cd [Nombre-Repositorio]
+   git clone rarojas25/https://github.com/rarojas25/Taller01POO
