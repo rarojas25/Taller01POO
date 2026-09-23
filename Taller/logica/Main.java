@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.Scanner;
 
 public class Main {
+	//Cantidad maxima de personas que puede almacenar cada vector
 	
 	static final int MAX = 200;
 	
@@ -84,7 +85,7 @@ public class Main {
 			return;
 		}
 		System.out.println();
-		System.out.println("--- Analisis estadisticos ---");
+		System.out.println("--- Analisis estadistico ---");
 		System.out.println("Total de intentos de ingreso: " + totalIntentosIngresos);
 		
 		if(totalIntentosIngresos == 0) {
@@ -106,7 +107,7 @@ public class Main {
 		}
 		System.out.println("Alumnos por paralelo -> C1: " + totalC1 + " | C2: " + totalC2);
 		if(cantAlumnos > 0) {
-			System.out.println("Paralelo con las alumnos: " + (totalC1 >= totalC2 ? "C1" : "C2"));
+			System.out.println("Paralelo con más alumnos: " + (totalC1 >= totalC2 ? "C1" : "C2"));
 		}
 		
 		int rechazadosSoloRutCont = 0;
@@ -124,7 +125,7 @@ public class Main {
 			}
 		}
 		System.out.println("Inscritos manuales: " + inscritosManual + " | Por Archivo: " + (cantMiembros - inscritosManual));
-		System.out.println("Solicirudes duplicadas detectadas: " + solicitudesDuplicadas);
+		System.out.println("Solicitudes duplicadas detectadas: " + solicitudesDuplicadas);
 		
 		if(cantAlumnos > 0) {
 			String apellidoMasRepetido = apellidoAlumno[0];
@@ -266,7 +267,6 @@ public class Main {
 		}while (opcion != 4);
 	}
 
-
 	private static void cambiarParalelo() {
 		System.out.print("Ingresa RUT del alumno: ");
 		String rut = teclado.nextLine().trim();
@@ -290,10 +290,9 @@ public class Main {
 		int idxMiembro = buscarMiembroPorRut(rut);
 		if(idxMiembro != -1) {
 			paraleloMiembro[idxMiembro] = nuevoParalelo;
-			
-			guardarAlumnosEnArchivo();
-			System.out.println("Paralelo actualizado! Cambios guardados en Alumnos.txt");
 		}
+		guardarAlumnosEnArchivo();
+		System.out.println("Paralelo actualizado! Cambios guardados en Alumnos.txt");
 	}
 
 	private static void eliminarAlumno() {
@@ -311,6 +310,7 @@ public class Main {
 		for(int i = idx; i < cantAlumnos - 1; i++) {
 			nombreAlumno[i] = nombreAlumno[i + 1];
 			apellidoAlumno[i] = apellidoAlumno[i + 1];
+			rutAlumno[i] = rutAlumno[i + 1];
 			paraleloAlumno[i] = paraleloAlumno[i + 1];
 		}
 		cantAlumnos--;
@@ -664,8 +664,8 @@ public class Main {
 	private static void mostrarMenuPrincipal() {
 		System.out.println();
 		System.out.println("===== Sistema de Control del Grupo POO =====");
-		System.out.println("1) Cargar archivos (Alumnos y Solicitudes");
-		System.out.println("2) Procesar solicitudes (Filtrando automatico)");
+		System.out.println("1) Cargar archivos (Alumnos y Solicitudes)");
+		System.out.println("2) Procesar solicitudes (Filtrado automatico)");
 		System.out.println("3) Inscripcion manual al grupo");
 		System.out.println("4) Administracion del curso");
 		System.out.println("5) Generar reportes");

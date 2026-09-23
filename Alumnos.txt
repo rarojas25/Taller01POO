@@ -1,4 +1,4 @@
-Martin;Droguett;19000137-7;C2
+Martin;Droguett;19000137-7;C1
 Mariana;Fuentes;19039318-6;C2
 Luis;Pineda;19079476-8;C2
 Sofia;Contreras;19120611-8;C1
